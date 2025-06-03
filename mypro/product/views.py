@@ -10,9 +10,9 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from utils.lockout import is_locked_out,record_failed_attempt,reset_failed_attempts
 from .decorators import custom_decorator
-from .forms import CustomUserCreationForm
+from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import Productpage
 from .serializers import ProductPageSerializer
 
@@ -44,29 +44,25 @@ def register(request):
         form= CustomUserCreationForm()
         return render(request,'register.html',{'form':form})
  
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.shortcuts import redirect, render
 
-from .forms import CustomAuthenticationForm
 
 
 def login_view(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
+        logger.debug("Login attempt with POST data: %s", request.POST)
+
         if form.is_valid():
-            username = form.cleaned_data.get('username')  # This will be the email
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('product-page')
-            else:
-                messages.error(request, 'Invalid email or password')
+            username = form.cleaned_data.get('username')
+            logger.info(f"User {username} authenticated successfully.")
+            login(request, form.get_user())
+            reset_failed_attempts(username)
+            return redirect('product-page')
         else:
-            messages.error(request, 'Please correct the errors below')
+            logger.debug(f"Form errors: {form.errors.as_json()}")
+            messages.error(request, form.errors.get('__all__')[0])
     else:
         form = CustomAuthenticationForm()
-    
-    return render(request, 'login.html', {'form': form})
+        logger.debug("GET request for login page.")
 
+    return render(request, 'login.html', {'form': form})
