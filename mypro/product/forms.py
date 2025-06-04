@@ -1,10 +1,11 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
+from utils.lockout import is_locked_out, record_failed_attempt
+
 from .models import CustomUser
 
-from utils.lockout import is_locked_out, record_failed_attempt  
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:

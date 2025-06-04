@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'product.middleware.ip_blocker.BlockIPMiddleware',
 ]
 
 ROOT_URLCONF = 'mypro.urls'
