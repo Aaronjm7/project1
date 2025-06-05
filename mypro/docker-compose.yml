@@ -19,3 +19,12 @@ services:
       - development.env
     depends_on:
       - redis
+  celery:
+    build: .
+    command: celery -A mypro worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0

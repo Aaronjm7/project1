@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_celery_results',  # optional: for task result tracking
+    'django_celery_beat',
     'product',
     'drf_yasg',
     
@@ -52,7 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'product.middleware.ip_blocker.BlockIPMiddleware',
+    #'product.middleware.ip_blocker.BlockIPMiddleware',
 ]
 
 ROOT_URLCONF = 'mypro.urls'
@@ -169,3 +171,11 @@ LOGGING = {
         },
     },
 }
+
+CELERY_BROKER_URL ='redis://redis:6379/0'
+CELERY_RESULT_BACKEND='redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT =['json']
+CELERY_TASK_SERIALIZER= 'json'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+

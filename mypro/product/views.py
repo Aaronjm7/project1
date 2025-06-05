@@ -10,11 +10,14 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from utils.lockout import is_locked_out,record_failed_attempt,reset_failed_attempts
+from utils.lockout import (is_locked_out, record_failed_attempt,
+                           reset_failed_attempts)
+
 from .decorators import custom_decorator
 from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import Productpage
 from .serializers import ProductPageSerializer
+from .tasks import send_welcome_email
 
 logger=logging.getLogger(__name__)
 
@@ -37,13 +40,13 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()  # Capture the user instance
+            send_welcome_email.delay(user.id)  # Call Celery task
             return redirect('login')
-        
     else:
-        form= CustomUserCreationForm()
-        return render(request,'register.html',{'form':form})
- 
+        form = CustomUserCreationForm()
+        
+    return render(request, 'register.html', {'form': form})
 
 
 
