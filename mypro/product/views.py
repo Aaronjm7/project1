@@ -49,7 +49,7 @@ def product_page(request):
 def cart(request):
     return render(request,'cart.html')
 
-
+@custom_decorator
 def wishlist(request):
     return render(request,'wishlist.html')
  
