@@ -2,109 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Products Table</title>
-  <meta name="csrf-token" content="{{ csrf_token }}">  <!-- CSRF Token from Django -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
-<body class="p-4">
-  <h1 class="mb-4">Product List</h1>
-
-  <!-- Product Form -->
-  <form id="product-form" class="mb-4">
-    <div class="row g-2 mb-3">
-      <div class="col-md">
-        <input type="text" id="name" class="form-control" placeholder="Product Name" required />
-      </div>
-      <div class="col-md">
-        <input type="number" id="price" class="form-control" placeholder="Price (₹)" step="0.01" required />
-      </div>
-      <div class="col-md">
-        <input type="number" id="quantity" class="form-control" placeholder="Quantity" required />
-      </div>
-      <div class="col-md-auto">
-        <button type="submit" class="btn btn-primary">Add Product</button>
-      </div>
+<body class="p-4 bg-light">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Product List</h1>
+    <div>
+      <a href="/wishlist/" class="btn btn-outline-danger me-2">❤️ View Wishlist</a>
+      <a href="/cart/" class="btn btn-outline-primary">🛒 View Cart</a>
     </div>
-  </form>
+  </div>
 
   <!-- Product Table -->
   <table class="table table-striped table-bordered">
     <thead class="table-dark">
       <tr>
-        <th scope="col">#</th>
-        <th scope="col">Product Name</th>
-        <th scope="col">Price (₹)</th>
-        <th scope="col">Quantity</th>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Price (₹)</th>
+        <th>Quantity</th>
       </tr>
     </thead>
-    <tbody id="product-body">
-      <!-- Products will be inserted here -->
-    </tbody>
+    <tbody id="product-body"></tbody>
   </table>
 
-  <script>
-    const productBody = document.getElementById('product-body');
+  <!-- Add to Cart -->
+  <div class="mb-4">
+    <h4>Add to Cart</h4>
+    <form id="cart-form" class="row g-2">
+      <div class="col-md">
+        <input type="number" id="cart-product-id" class="form-control" placeholder="Enter Product ID" required />
+      </div>
+      <div class="col-md">
+        <input type="number" id="cart-quantity" class="form-control" placeholder="Quantity" required />
+      </div>
+      <div class="col-md-auto">
+        <button type="submit" class="btn btn-success">🛒 Add to Cart</button>
+      </div>
+    </form>
+  </div>
 
-    // Get CSRF token from meta tag
+  <!-- Add to Wishlist -->
+  <div class="mb-4">
+    <h4>Add to Wishlist</h4>
+    <form id="wishlist-form" class="row g-2">
+      <div class="col-md">
+        <input type="number" id="wishlist-product-id" class="form-control" placeholder="Enter Product ID" required />
+      </div>
+      <div class="col-md-auto">
+        <button type="submit" class="btn btn-danger">❤️ Add to Wishlist</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
     function getCSRFToken() {
       return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     }
 
-    // Load products into table
+    // Load products into the table
     function loadProducts() {
       fetch('/api/product/')
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-          productBody.innerHTML = '';
-          data.forEach((product, index) => {
+          const tbody = document.getElementById('product-body');
+          tbody.innerHTML = '';
+          data.forEach(product => {
             const row = document.createElement('tr');
             row.innerHTML = `
-              <th scope="row">${index + 1}</th>
+              <td>${product.id}</td>
               <td>${product.name}</td>
-              <td>${product.price}</td>
+              <td>₹${product.price}</td>
               <td>${product.quantity}</td>
             `;
-            productBody.appendChild(row);
+            tbody.appendChild(row);
           });
-        })
-        .catch(error => {
-          console.error('Failed to load products:', error);
         });
     }
 
-    // Submit form to add product
-    document.getElementById('product-form').addEventListener('submit', function (e) {
+    // Handle add to cart
+    document.getElementById('cart-form').addEventListener('submit', function(e) {
       e.preventDefault();
+      const productId = document.getElementById('cart-product-id').value;
+      const quantity = document.getElementById('cart-quantity').value;
 
-      const name = document.getElementById('name').value;
-      const price = document.getElementById('price').value;
-      const quantity = document.getElementById('quantity').value;
-
-      fetch('/api/product/', {
+      fetch('/api/cart/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken(),
+          'X-CSRFToken': getCSRFToken()
         },
-        body: JSON.stringify({ name, price, quantity }),
+        body: JSON.stringify({ product_id: productId, quantity })
       })
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to add product');
-          return response.json();
-        })
-        .then(data => {
-          document.getElementById('product-form').reset();
-          loadProducts();  // Refresh list
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+      .then(res => {
+        if (!res.ok) throw res;
+        alert("✅ Added to cart!");
+      })
+      .catch(async err => {
+        const errData = await err.json();
+        alert("❌ " + (errData.detail || "Failed to add to cart"));
+      });
     });
 
-    // Load products when page loads
+    // Handle add to wishlist
+    document.getElementById('wishlist-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const productId = document.getElementById('wishlist-product-id').value;
+
+      fetch('/api/wishlist/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ product_id: productId })
+      })
+      .then(res => {
+        if (!res.ok) throw res;
+        alert("✅ Added to wishlist!");
+      })
+      .catch(async err => {
+        const errData = await err.json();
+        alert("❌ " + (errData.detail || "Failed to add to wishlist"));
+      });
+    });
+
+    // Initial load
     loadProducts();
   </script>
 </body>

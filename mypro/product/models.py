@@ -40,4 +40,16 @@ class Productpage(models.Model):
  name=models.CharField(max_length=30)
  price=models.IntegerField()
  quantity=models.IntegerField()
-   
+ 
+class Wishlist(models.Model):
+     user=models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='wishlist_item')
+     product = models.ForeignKey(Productpage,on_delete=models.CASCADE,related_name='wishlist')
+     
+     class Meta:
+         unique_together = ('user', 'product')
+         
+class CartItem(models.Model):
+    user= models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='cart_item')
+    product= models.ForeignKey(Productpage,on_delete=models.CASCADE,related_name='cart')
+    quantity= models.PositiveBigIntegerField(default=0)
+       
