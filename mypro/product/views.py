@@ -3,17 +3,19 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.db import connection, reset_queries
 from django.db.models import F, Sum
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 from rest_framework import generics, status
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from utils.lockout import (is_locked_out, record_failed_attempt,
                            reset_failed_attempts)
-from django.db import reset_queries, connection
+
 from .decorators import custom_decorator
 from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import CartItem, Productpage, Wishlist
@@ -26,7 +28,8 @@ logger=logging.getLogger(__name__)
 class ProductPageCreateAPIView(generics.ListCreateAPIView):
     queryset=Productpage.objects.all()
     serializer_class=ProductPageSerializer
-    
+    filter_backends = [SearchFilter]
+    search_fields =['name']
     
     def list(self,request, *args,**kwargs):
         logger.info("Board creation attempt: ",)
@@ -34,6 +37,7 @@ class ProductPageCreateAPIView(generics.ListCreateAPIView):
     def create(self,request,*args,**kwargs):
         logger.info("Board creation attempt: %s",request.data)
         return super().create(request,*args,**kwargs)
+    
 
 
 
@@ -41,7 +45,7 @@ class ProductPageCreateAPIView(generics.ListCreateAPIView):
 def product_page(request):
     return render(request,'index.html')
 
-
+@custom_decorator
 def cart(request):
     return render(request,'cart.html')
 

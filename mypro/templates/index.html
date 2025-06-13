@@ -16,7 +16,19 @@
     </div>
   </div>
 
-  <!-- Product Table -->
+  <!-- 🔍 Search Bar with Dropdown -->
+  <div class="mb-4 position-relative">
+    <input
+      type="text"
+      id="search-bar"
+      class="form-control"
+      placeholder="🔍 Search products by name..."
+      autocomplete="off"
+    />
+    <ul class="list-group position-absolute w-100 z-3" id="search-results" style="max-height: 200px; overflow-y: auto; display: none;"></ul>
+  </div>
+
+  <!-- 📦 Product Table -->
   <table class="table table-striped table-bordered">
     <thead class="table-dark">
       <tr>
@@ -29,7 +41,7 @@
     <tbody id="product-body"></tbody>
   </table>
 
-  <!-- Add to Cart -->
+  <!-- 🛒 Add to Cart -->
   <div class="mb-4">
     <h4>Add to Cart</h4>
     <form id="cart-form" class="row g-2">
@@ -45,7 +57,7 @@
     </form>
   </div>
 
-  <!-- Add to Wishlist -->
+  <!-- ❤️ Add to Wishlist -->
   <div class="mb-4">
     <h4>Add to Wishlist</h4>
     <form id="wishlist-form" class="row g-2">
@@ -83,7 +95,7 @@
         });
     }
 
-    // Handle add to cart
+    // 🛒 Add to Cart
     document.getElementById('cart-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const productId = document.getElementById('cart-product-id').value;
@@ -107,7 +119,7 @@
       });
     });
 
-    // Handle add to wishlist
+    // ❤️ Add to Wishlist
     document.getElementById('wishlist-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const productId = document.getElementById('wishlist-product-id').value;
@@ -128,6 +140,54 @@
         const errData = await err.json();
         alert("❌ " + (errData.detail || "Failed to add to wishlist"));
       });
+    });
+
+    // 🔍 Search functionality
+    const searchInput = document.getElementById('search-bar');
+    const resultsBox = document.getElementById('search-results');
+
+    searchInput.addEventListener('input', function () {
+      const query = this.value.trim();
+      if (!query) {
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
+        return;
+      }
+
+      fetch(`/api/product/?search=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          resultsBox.innerHTML = '';
+          if (data.length === 0) {
+            resultsBox.style.display = 'none';
+            return;
+          }
+
+          data.forEach(product => {
+            const item = document.createElement('li');
+            item.className = 'list-group-item list-group-item-action';
+            item.innerHTML = `<strong>${product.name}</strong> – ₹${product.price}`;
+            item.addEventListener('click', () => {
+              searchInput.value = product.name;
+              resultsBox.innerHTML = '';
+              resultsBox.style.display = 'none';
+            });
+            resultsBox.appendChild(item);
+          });
+
+          resultsBox.style.display = 'block';
+        })
+        .catch(() => {
+          resultsBox.innerHTML = '<li class="list-group-item text-danger">Error fetching results</li>';
+          resultsBox.style.display = 'block';
+        });
+    });
+
+    // Hide dropdown on outside click
+    document.addEventListener('click', function (e) {
+      if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+        resultsBox.style.display = 'none';
+      }
     });
 
     // Initial load
