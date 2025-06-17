@@ -102,17 +102,26 @@ class CartItemListCreateView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-
-        reset_queries()
-        total_items = sum(item.quantity for item in queryset)
-        total_price = sum(item.quantity * item.product.price for item in queryset)
-        total_queries = len(connection.queries)
-        print("Total SQL Queries:",total_queries)
+       
+        total_items=0
+        total_price=0
+        final_price=0
+        
+        for item in serializer.data:
+            quantity =int( item['quantity'])
+            price = float(item['product']['price'])
+            discounted_price =float( item['product']['discounted_price'])
+            total_items += quantity
+            total_price += quantity*price
+            final_price+= quantity* discounted_price
+            
         return Response({
-            'items': serializer.data,
-            'total_items': total_items,
-            'total_price': total_price
+            'items':serializer.data,
+            'total_items':total_items,
+            'total_price':round(total_price,2),
+            'final_price':round(final_price,2)
         })
+     
 
 
         
@@ -122,6 +131,7 @@ class CartItemListCreateView(generics.ListCreateAPIView):
 
 
 class CartItemDeleteView(generics.DestroyAPIView):
+   
    def get_queryset(self):
      return CartItem.objects.select_related('product').filter(user=self.request.user)
 

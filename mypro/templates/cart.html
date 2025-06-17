@@ -27,29 +27,45 @@
       fetch('/api/cart/')
         .then(res => res.json())
         .then(data => {
-          const items = data.items || data; // fallback for old format
+          const items = data.items || [];
           const list = document.getElementById('cart-items');
           const summary = document.getElementById('cart-summary');
 
           list.innerHTML = '';
+          let totalItems = 0;
 
           items.forEach(item => {
+            const product = item.product;
+            const name = product.name;
+            const price = parseFloat(product.price ?? 0);
+            const discount = parseFloat(product.discount ?? 0);
+            const discountedPrice = parseFloat(product.discounted_price ?? price);
+            const quantity = parseInt(item.quantity ?? 0);
+            const subtotal = parseFloat((discountedPrice * quantity).toFixed(2));
+
+            totalItems += quantity;
+
             const li = document.createElement('li');
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            const subtotal = item.product.price * item.quantity;
+            li.className = "list-group-item d-flex justify-content-between align-items-start flex-column";
+
             li.innerHTML = `
-              ${item.product.name} - ₹${item.product.price} × ${item.quantity} = ₹${subtotal}
-              <button class="btn btn-sm btn-danger" onclick="removeFromCart(${item.id})">🗑 Remove</button>
+              <div class="d-flex justify-content-between w-100">
+                <strong>${name}</strong>
+                <button class="btn btn-sm btn-danger" onclick="removeFromCart(${item.id})">🗑 Remove</button>
+              </div>
+              <small>Price: ₹${price.toFixed(2)} | Discount: ${discount}% | After Discount: ₹${discountedPrice.toFixed(2)}</small><br/>
+              <span>Qty: ${quantity} × ₹${discountedPrice.toFixed(2)} = ₹${subtotal.toFixed(2)}</span>
             `;
+
             list.appendChild(li);
           });
 
-          // Show summary only if cart has items
           if (items.length > 0) {
+            const finalPrice = parseFloat(data.final_price ?? 0);
             summary.style.display = 'block';
             summary.innerHTML = `
-              🧾 <strong>Total Items:</strong> ${data.total_items || items.length} |
-              <strong>Total Price:</strong> ₹${data.total_price || 0}
+              🧾 <strong>Total Items:</strong> ${totalItems} |
+              <strong>Final Price:</strong> ₹${finalPrice.toFixed(2)}
             `;
           } else {
             summary.style.display = 'none';
@@ -63,8 +79,7 @@
         headers: {
           'X-CSRFToken': getCSRFToken(),
         }
-      })
-      .then(res => {
+      }).then(res => {
         if (res.ok) {
           loadCartItems();
         } else {
@@ -73,6 +88,7 @@
       });
     }
 
+    // Load cart on page load
     loadCartItems();
   </script>
 </body>

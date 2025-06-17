@@ -16,15 +16,9 @@
     </div>
   </div>
 
-  <!-- 🔍 Search Bar with Dropdown -->
+  <!-- 🔍 Search Bar -->
   <div class="mb-4 position-relative">
-    <input
-      type="text"
-      id="search-bar"
-      class="form-control"
-      placeholder="🔍 Search products by name..."
-      autocomplete="off"
-    />
+    <input type="text" id="search-bar" class="form-control" placeholder="🔍 Search products by name..." autocomplete="off" />
     <ul class="list-group position-absolute w-100 z-3" id="search-results" style="max-height: 200px; overflow-y: auto; display: none;"></ul>
   </div>
 
@@ -35,6 +29,7 @@
         <th>ID</th>
         <th>Name</th>
         <th>Price (₹)</th>
+        <th>Discount (%)</th>
         <th>Quantity</th>
       </tr>
     </thead>
@@ -88,7 +83,8 @@
               <td>${product.id}</td>
               <td>${product.name}</td>
               <td>₹${product.price}</td>
-              <td>${product.quantity}</td>
+              <td>${product.discount}%</td>
+              <td>${product.quantity ?? '-'}</td>
             `;
             tbody.appendChild(row);
           });

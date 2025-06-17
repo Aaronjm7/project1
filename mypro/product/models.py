@@ -38,8 +38,13 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
         return self.email
 class Productpage(models.Model):
  name=models.CharField(max_length=30)
- price=models.IntegerField()
+ price=models.FloatField()
  quantity=models.IntegerField()
+ discount = models.FloatField(default=0.0)
+    
+
+ def __str__(self):
+     return self.name
  
 class Wishlist(models.Model):
      user=models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='wishlist_item')
